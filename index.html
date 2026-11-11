@@ -19,6 +19,8 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation}
 /* header */
 .hdr{height:68px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;background:#1F7A4D;color:#fff}
 .hdr.venmo{background:#0B5CC4}
+.hdr.zelle{background:#5B2BB5}
+.hdr.zelle .logo{color:#5B2BB5}
 .brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:900;white-space:nowrap}
 .logo{width:38px;height:38px;border-radius:10px;background:#fff;color:#1F7A4D;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900}
 .hdr.venmo .logo{color:#0B5CC4}
@@ -68,15 +70,16 @@ h2{margin:0;font-size:24px;font-weight:900}
 .dealbox{padding:10px 12px;border-radius:12px;background:#FFF1D6;color:#7A4300;font-size:15px;font-weight:800}
 .total{display:flex;align-items:baseline;justify-content:space-between}
 .total b{font-size:50px;font-weight:900;line-height:1}
-.pay2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.paybtn{height:84px;border-radius:16px;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:27px;font-weight:900}
+.pay2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.paybtn{height:84px;border-radius:16px;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;font-weight:900}
 .paybtn small{font-size:13px;font-weight:700}
-.paybtn.cash{background:#1F7A4D}.paybtn.ven{background:#0B5CC4}
+.paybtn.cash{background:#1F7A4D}.paybtn.ven{background:#0B5CC4}.paybtn.zel{background:#5B2BB5}
 .paybtn:disabled{background:#E6EBE7;color:#5E6B63}
 
 /* pay screens */
 .pay{flex:1;display:flex;gap:22px;padding:20px;min-height:0}
 .pay.ven{background:#F2F6FB}
+.pay.zel{background:#F5F1FC}
 .pcol{width:420px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;min-height:0}
 .card{background:#fff;border:1px solid #DCE5DE;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
 .rline{display:flex;justify-content:space-between;font-size:18px;font-weight:800}
@@ -108,7 +111,7 @@ h2{margin:0;font-size:24px;font-weight:900}
 .dots.bad{border-color:#B42318}
 .err{text-align:center;color:#B42318;font-weight:800}
 .log{flex:1;display:flex;flex-direction:column;gap:14px;padding:18px 20px;min-height:0}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
 .stat{background:#fff;border:1px solid #DCE5DE;border-radius:14px;padding:10px 14px}
 .stat span{display:block;font-size:14px;font-weight:800;color:#4A5A50}
 .stat b{font-size:30px;font-weight:900}
@@ -118,7 +121,7 @@ h2{margin:0;font-size:24px;font-weight:900}
 .th{font-size:13px;font-weight:900;color:#4A5A50;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #DCE5DE;position:sticky;top:0;background:#fff}
 .tr.void{color:#6B756F}.tr.void .st{text-decoration:line-through}
 .chip{justify-self:start;padding:3px 10px;border-radius:999px;font-size:14px;font-weight:900}
-.chip.c{background:#DDF0E4;color:#155C39}.chip.v{background:#E1ECFB;color:#0B4FA6}
+.chip.c{background:#DDF0E4;color:#155C39}.chip.v{background:#E1ECFB;color:#0B4FA6}.chip.z{background:#EEE5FF;color:#4A2296}
 .vtag{padding:3px 8px;border-radius:8px;background:#FDE8E6;color:#B42318;font-size:13px;font-weight:900}
 .note{font-size:14px;color:#4A5A50}
 .modal-bg{position:fixed;inset:0;background:rgba(20,30,25,.45);display:flex;align-items:center;justify-content:center;z-index:10}
@@ -142,6 +145,8 @@ const CONFIG = {
   PIN: '1234',                       // parent PIN for the Sales log
   VENMO_HANDLE: '',                  // e.g. '@Calvin-Wong' (shown under the QR)
   VENMO_QR: '',                      // e.g. 'img/venmo-qr.png' once the QR screenshot is added
+  ZELLE_NAME: '',                    // name or phone/email shown under the Zelle QR
+  ZELLE_QR: '',                      // e.g. 'img/zelle-qr.png'
   PRICE_ONE: 6, PRICE_MULTI: 5
 };
 const PRODUCTS = [
@@ -275,10 +280,14 @@ const ICON = {
   dl: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
   qr: '<svg width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M17 20h4"/></svg>'
 };
+const APPPAY = {
+  Venmo: { color: '#0B5CC4', soft: '#E1ECFB', ink: '#0B4FA6', border: '#C7D5E8', card: '#D6E1F0', cls: 'ven', qr: function () { return CONFIG.VENMO_QR; }, who: function () { return CONFIG.VENMO_HANDLE || '@[YOUR-VENMO]'; } },
+  Zelle: { color: '#5B2BB5', soft: '#EEE5FF', ink: '#4A2296', border: '#D9CCF2', card: '#E3D9F5', cls: 'zel', qr: function () { return CONFIG.ZELLE_QR; }, who: function () { return CONFIG.ZELLE_NAME || '[Zelle name / phone]'; } }
+};
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Clear', '0', 'Del'];
 
 function header() {
-  const onPay = ui.screen === 'cash' || ui.screen === 'venmo';
+  const onPay = ui.screen === 'cash' || ui.screen === 'venmo' || ui.screen === 'zelle';
   const logOn = ui.screen === 'log' || ui.screen === 'pin';
   const i = syncInfo();
   let sync;
@@ -286,10 +295,10 @@ function header() {
   else if (i.err) sync = '<span class="badge b-warn">' + esc(i.err) + ' · will retry</span>';
   else if (i.lastOk) sync = '<span class="badge b-sync">Last backup ' + clock(new Date(i.lastOk)) + ' ✓</span>';
   else sync = '<span class="badge b-sync">Not backed up yet</span>';
-  return '<header class="hdr' + (ui.screen === 'venmo' ? ' venmo' : '') + '">' +
+  return '<header class="hdr' + (ui.screen === 'venmo' ? ' venmo' : (ui.screen === 'zelle' ? ' zelle' : '')) + '">' +
     '<div class="brand"><div class="logo">S</div>Shamrock Makers Shop</div>' +
     '<div class="hdr-mid">' + (mode() === 'test' ? '<span class="badge b-test">TEST MODE</span>' : '') + sync + '</div>' +
-    (onPay ? '<div class="paytitle">' + (ui.screen === 'cash' ? 'Cash payment' : 'Venmo payment') + '</div>' :
+    (onPay ? '<div class="paytitle">' + (ui.screen === 'cash' ? 'Cash payment' : (ui.screen === 'venmo' ? 'Venmo payment' : 'Zelle payment')) + '</div>' :
       '<nav class="tabs"><button class="tab' + (logOn ? '' : ' on') + '" data-a="goSell">Sell</button>' +
       '<button class="tab' + (logOn ? ' on' : '') + '" data-a="goLog">' + ICON.lock + 'Sales log</button></nav>') +
     '</header>';
@@ -323,7 +332,8 @@ function sellScreen() {
     (deal ? '<div class="dealbox">' + deal + '</div>' : '') +
     '<div class="total"><span style="font-size:21px;font-weight:800">Total</span><b>$' + t.total + '</b></div>' +
     '<div class="pay2"><button class="paybtn cash" data-a="goCash"' + (t.count ? '' : ' disabled') + '>Cash<small>bills &amp; coins</small></button>' +
-    '<button class="paybtn ven" data-a="goVenmo"' + (t.count ? '' : ' disabled') + '>Venmo<small>scan the QR</small></button></div>' +
+    '<button class="paybtn ven" data-a="goVenmo"' + (t.count ? '' : ' disabled') + '>Venmo<small>scan the QR</small></button>' +
+    '<button class="paybtn zel" data-a="goZelle"' + (t.count ? '' : ' disabled') + '>Zelle<small>scan the QR</small></button></div>' +
     '</aside></div>';
 }
 
@@ -352,20 +362,21 @@ function cashScreen() {
     '</section></div>';
 }
 
-function venmoScreen() {
-  const t = totals();
-  return '<div class="pay ven"><section class="pcol" style="width:440px">' +
-    '<button class="btn" style="align-self:flex-start;border-color:#C7D5E8" data-a="back">' + ICON.back + 'Back to order</button>' +
-    '<div class="card" style="border-color:#D6E1F0"><span class="sub" style="font-size:17px">Ask them to pay</span><span style="font-size:84px;font-weight:900;line-height:1;color:#0B5CC4">$' + t.total + '</span>' +
+function appPayScreen(method) {
+  const t = totals(); const c = APPPAY[method]; const qr = c.qr();
+  const dot = 'style="background:' + c.soft + ';color:' + c.ink + '"';
+  return '<div class="pay ' + c.cls + '"><section class="pcol" style="width:440px">' +
+    '<button class="btn" style="align-self:flex-start;border-color:' + c.border + '" data-a="back">' + ICON.back + 'Back to order</button>' +
+    '<div class="card" style="border-color:' + c.card + '"><span class="sub" style="font-size:17px">Ask them to pay</span><span style="font-size:84px;font-weight:900;line-height:1;color:' + c.color + '">$' + t.total + '</span>' +
     '<span class="sub">' + t.count + (t.count === 1 ? ' item' : ' items') + ' · ' + esc(itemsText(ui.cart)) + '</span></div>' +
-    '<ol class="steps"><li><i>1</i>Turn the tablet so they can scan</li><li><i>2</i>They pay $' + t.total + ' on their phone</li><li><i>3</i>A parent checks the Venmo phone</li></ol>' +
+    '<ol class="steps"><li><i ' + dot + '>1</i>Turn the tablet so they can scan</li><li><i ' + dot + '>2</i>They pay $' + t.total + ' with ' + method + '</li><li><i ' + dot + '>3</i>A parent checks the ' + method + ' phone</li></ol>' +
     '<div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">' +
-    '<button class="savebtn g" data-a="saveVenmo">' + ICON.check + 'Parent: payment received</button>' +
-    '<button class="btn" style="height:52px;border-color:#C7D5E8" data-a="back">It didn\'t go through – go back</button></div>' +
-    '</section><section class="qrside"><span style="font-size:25px;font-weight:900">Scan to pay with Venmo</span>' +
-    (CONFIG.VENMO_QR ? '<img class="qrimg" src="' + CONFIG.VENMO_QR + '" alt="Venmo QR code">' :
-      '<div class="qrbox">' + ICON.qr + '<span style="font-size:21px;font-weight:900">Venmo QR code goes here</span><span style="font-size:15px">Add the QR picture before the dry run</span></div>') +
-    '<span style="font-size:21px;font-weight:800;color:#4A5A50">' + esc(CONFIG.VENMO_HANDLE || '@[YOUR-VENMO]') + '</span>' +
+    '<button class="savebtn g" data-a="saveApp" data-m="' + method + '">' + ICON.check + 'Parent: payment received</button>' +
+    '<button class="btn" style="height:52px;border-color:' + c.border + '" data-a="back">It didn\'t go through – go back</button></div>' +
+    '</section><section class="qrside" style="border-color:' + c.card + '"><span style="font-size:25px;font-weight:900">Scan to pay with ' + method + '</span>' +
+    (qr ? '<img class="qrimg" src="' + qr + '" alt="' + method + ' QR code">' :
+      '<div class="qrbox" style="border-color:' + c.color + ';background:' + c.soft + ';color:' + c.ink + '">' + ICON.qr + '<span style="font-size:21px;font-weight:900">' + method + ' QR code goes here</span><span style="font-size:15px">Add the QR picture before the dry run</span></div>') +
+    '<span style="font-size:21px;font-weight:800;color:#4A5A50">' + esc(c.who()) + '</span>' +
     '</section></div>';
 }
 
@@ -379,11 +390,11 @@ function pinScreen() {
 
 function logScreen() {
   const list = modeSales();
-  let n = 0, items = 0, cash = 0, ven = 0;
-  list.forEach(function (s) { if (s.voided) return; n++; items += s.qty; if (s.pay === 'Cash') cash += s.total; else ven += s.total; });
+  let n = 0, items = 0, cash = 0, ven = 0, zel = 0;
+  list.forEach(function (s) { if (s.voided) return; n++; items += s.qty; if (s.pay === 'Cash') cash += s.total; else if (s.pay === 'Zelle') zel += s.total; else ven += s.total; });
   const rows = list.map(function (s) {
     return '<div class="tr' + (s.voided ? ' void' : '') + '"><span>' + esc(s.time) + '</span><span class="st">' + esc(s.items) + '</span><span class="st">' + s.qty + '</span>' +
-      '<span class="st" style="font-weight:900">$' + s.total + '</span><span class="chip ' + (s.pay === 'Cash' ? 'c' : 'v') + '">' + s.pay + '</span>' +
+      '<span class="st" style="font-weight:900">$' + s.total + '</span><span class="chip ' + (s.pay === 'Cash' ? 'c' : (s.pay === 'Zelle' ? 'z' : 'v')) + '">' + s.pay + '</span>' +
       (s.voided ? '<span style="display:flex;align-items:center;gap:6px"><span class="vtag">VOID</span><button class="btn" style="height:42px;padding:0 10px" data-a="restore" data-id="' + s.id + '">Restore</button></span>'
         : '<button class="btn red" style="height:42px" data-a="voidAsk" data-id="' + s.id + '">Void sale</button>') + '</div>';
   }).join('');
@@ -392,8 +403,8 @@ function logScreen() {
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn green" data-a="sync">Sync now</button><button class="btn green" data-a="csv">' + ICON.dl + 'Export CSV</button>' +
     '<button class="btn" data-a="settings">Settings</button><button class="btn dark" data-a="lock">' + ICON.lock + 'Lock</button></div></div>' +
     '<div class="stats"><div class="stat"><span>Sales</span><b>' + n + '</b></div><div class="stat"><span>Items sold</span><b>' + items + '</b></div>' +
-    '<div class="stat"><span>Cash in box</span><b style="color:#1F7A4D">$' + cash + '</b></div><div class="stat"><span>Venmo</span><b style="color:#0B5CC4">$' + ven + '</b></div>' +
-    '<div class="stat tot"><span>Total</span><b>$' + (cash + ven) + '</b></div></div>' +
+    '<div class="stat"><span>Cash in box</span><b style="color:#1F7A4D">$' + cash + '</b></div><div class="stat"><span>Venmo</span><b style="color:#0B5CC4">$' + ven + '</b></div><div class="stat"><span>Zelle</span><b style="color:#5B2BB5">$' + zel + '</b></div>' +
+    '<div class="stat tot"><span>Total</span><b>$' + (cash + ven + zel) + '</b></div></div>' +
     '<div class="table"><div class="tr th"><span>Time</span><span>Items</span><span>Qty</span><span>Total</span><span>Paid by</span><span>Fix</span></div>' +
     (rows || '<div style="padding:34px;text-align:center;font-size:18px;color:#4A5A50">No sales yet.</div>') + '</div>' +
     '<div class="note">Voided sales stay in the log, the CSV and the Google sheet marked VOID. They don\'t count in the totals. Device: ' + store.device + '</div></div>';
@@ -430,7 +441,8 @@ function render() {
   let main = '';
   if (ui.screen === 'sell') main = sellScreen();
   else if (ui.screen === 'cash') main = cashScreen();
-  else if (ui.screen === 'venmo') main = venmoScreen();
+  else if (ui.screen === 'venmo') main = appPayScreen('Venmo');
+  else if (ui.screen === 'zelle') main = appPayScreen('Zelle');
   else if (ui.screen === 'pin') main = pinScreen();
   else if (ui.screen === 'log') main = logScreen();
   document.getElementById('app').innerHTML = header() + main + modalHtml();
@@ -447,10 +459,11 @@ document.getElementById('app').addEventListener('click', function (e) {
     case 'clear': ui.cart = {}; ui.flash = ''; break;
     case 'goCash': ui.screen = 'cash'; ui.entered = ''; ui.flash = ''; break;
     case 'goVenmo': ui.screen = 'venmo'; ui.flash = ''; break;
+    case 'goZelle': ui.screen = 'zelle'; ui.flash = ''; break;
+    case 'saveApp': saveSale(b.dataset.m); break;
     case 'back': ui.screen = 'sell'; ui.entered = ''; break;
     case 'quick': ui.entered = b.dataset.v; break;
     case 'saveCash': saveSale('Cash'); break;
-    case 'saveVenmo': saveSale('Venmo'); break;
     case 'goSell': ui.screen = 'sell'; ui.pin = ''; ui.pinWrong = false; break;
     case 'goLog': ui.screen = ui.unlocked ? 'log' : 'pin'; ui.pin = ''; ui.pinWrong = false; ui.flash = ''; break;
     case 'lock': ui.unlocked = false; ui.screen = 'sell'; break;
