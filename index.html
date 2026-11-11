@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1F7A4D">
+<title>Shamrock Makers Shop</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icon-192.png">
+<style>
+@font-face{font-family:'Nunito';font-weight:700;src:url(fonts/nunito-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-weight:800;src:url(fonts/nunito-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-weight:900;src:url(fonts/nunito-latin-900-normal.woff2) format('woff2')}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#F4F7F2;color:#1B2A22;font-family:'Nunito',system-ui,sans-serif;font-weight:700;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+#app{height:100%;display:flex;flex-direction:column}
+
+/* header */
+.hdr{height:68px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;background:#1F7A4D;color:#fff}
+.hdr.venmo{background:#0B5CC4}
+.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:900;white-space:nowrap}
+.logo{width:38px;height:38px;border-radius:10px;background:#fff;color:#1F7A4D;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900}
+.hdr.venmo .logo{color:#0B5CC4}
+.hdr-mid{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.badge{padding:5px 12px;border-radius:999px;font-size:14px;font-weight:800;white-space:nowrap}
+.b-test{background:#FFD866;color:#4A3400}
+.b-sync{background:rgba(255,255,255,.18);color:#fff}
+.b-warn{background:#FFF1D6;color:#7A4300}
+.tabs{display:flex;gap:8px}
+.tab{padding:9px 20px;border-radius:999px;border:0;background:#155C39;color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;gap:6px}
+.tab.on{background:#fff;color:#1F7A4D}
+.paytitle{font-size:19px;font-weight:800}
+
+/* sell */
+.sell{flex:1;display:flex;min-height:0}
+.left{flex:1;min-width:0;padding:18px 18px 16px 20px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:26px;font-weight:900}
+h2{margin:0;font-size:24px;font-weight:900}
+.deal-pill{padding:7px 14px;border-radius:999px;background:#FFF1D6;color:#7A4300;font-weight:800;font-size:16px}
+.flash{padding:11px 16px;border-radius:14px;background:#1F7A4D;color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;gap:10px}
+.flash.amber{background:#FFF1D6;color:#7A4300}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.tile{position:relative;display:flex;flex-direction:column;padding:0;border-radius:18px;border:3px solid #DCE5DE;background:#fff;overflow:hidden;color:#1B2A22}
+.tile.on{border-color:#1F7A4D}
+.tile:active{transform:scale(.97)}
+.pic{height:clamp(96px,17vh,150px);display:flex;align-items:center;justify-content:center;padding:10px}
+.pic img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+.pic span{font-size:14px;font-weight:800}
+.tname{padding:10px;font-size:20px;font-weight:900;text-align:center}
+.qty{position:absolute;top:8px;right:8px;min-width:38px;height:38px;padding:0 9px;border-radius:999px;background:#1F7A4D;color:#fff;font-size:19px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.foot{margin-top:auto;display:flex;align-items:center;gap:12px;font-size:14px;color:#4A5A50}
+.btn{height:46px;padding:0 16px;border-radius:12px;border:2px solid #C9D6CD;background:#fff;color:#1B2A22;font-size:16px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.green{border-color:#1F7A4D;color:#155C39}
+.btn.dark{background:#1B2A22;border-color:#1B2A22;color:#fff}
+.btn.red{border-color:#B42318;color:#B42318}
+
+.cart{width:380px;flex-shrink:0;background:#fff;border-left:1px solid #DCE5DE;display:flex;flex-direction:column;padding:18px 20px;gap:12px}
+.sub{font-size:15px;font-weight:800;color:#4A5A50}
+.emptybox{padding:34px 10px;text-align:center;font-size:18px;color:#4A5A50;border:2px dashed #DCE5DE;border-radius:16px}
+.lines{overflow:auto;min-height:0;flex:1}
+.line{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EEF2EE}
+.line .n{flex:1;min-width:0;font-size:18px;font-weight:800}
+.step{width:44px;height:44px;border-radius:12px;border:2px solid #DCE5DE;background:#fff;color:#1B2A22;font-size:24px;font-weight:900;padding:0}
+.line .q{min-width:22px;text-align:center;font-size:20px;font-weight:900}
+.line .p{width:46px;text-align:right;font-size:18px;font-weight:900}
+.dealbox{padding:10px 12px;border-radius:12px;background:#FFF1D6;color:#7A4300;font-size:15px;font-weight:800}
+.total{display:flex;align-items:baseline;justify-content:space-between}
+.total b{font-size:50px;font-weight:900;line-height:1}
+.pay2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.paybtn{height:84px;border-radius:16px;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:27px;font-weight:900}
+.paybtn small{font-size:13px;font-weight:700}
+.paybtn.cash{background:#1F7A4D}.paybtn.ven{background:#0B5CC4}
+.paybtn:disabled{background:#E6EBE7;color:#5E6B63}
+
+/* pay screens */
+.pay{flex:1;display:flex;gap:22px;padding:20px;min-height:0}
+.pay.ven{background:#F2F6FB}
+.pcol{width:420px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;min-height:0}
+.card{background:#fff;border:1px solid #DCE5DE;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.rline{display:flex;justify-content:space-between;font-size:18px;font-weight:800}
+.big{font-size:46px;font-weight:900}
+.change{border-radius:18px;background:#1F7A4D;color:#fff;padding:16px 18px}
+.change b{display:block;font-size:66px;font-weight:900;line-height:1}
+.need{border-radius:18px;background:#FFF1D6;color:#7A4300;padding:16px 18px}
+.need b{display:block;font-size:34px;font-weight:900}
+.savebtn{margin-top:auto;height:80px;border-radius:16px;border:0;background:#1B2A22;color:#fff;font-size:25px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px}
+.savebtn.g{background:#1F7A4D}
+.kpad{flex:1;min-width:0;background:#fff;border:1px solid #DCE5DE;border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.disp{height:84px;border-radius:16px;background:#F4F7F2;border:3px solid #1F7A4D;display:flex;align-items:center;justify-content:flex-end;padding:0 24px;font-size:58px;font-weight:900}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.quick button{height:56px;border-radius:14px;border:2px solid #1F7A4D;background:#DDF0E4;color:#155C39;font-size:21px;font-weight:900}
+.keys{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keys button{min-height:52px;border-radius:14px;border:2px solid #DCE5DE;background:#fff;color:#1B2A22;font-size:28px;font-weight:900}
+.keys button:active,.quick button:active,.step:active{background:#DDF0E4}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:800}
+.steps i{font-style:normal;width:38px;height:38px;flex-shrink:0;border-radius:999px;background:#E1ECFB;color:#0B4FA6;display:flex;align-items:center;justify-content:center;font-weight:900}
+.qrside{flex:1;min-width:0;background:#fff;border:1px solid #D6E1F0;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.qrbox{width:min(380px,60vh);aspect-ratio:1;border-radius:22px;border:4px dashed #0B5CC4;background:#F2F6FB;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#0B4FA6;text-align:center;padding:20px}
+.qrimg{width:min(380px,60vh);aspect-ratio:1;object-fit:contain}
+
+/* pin + log */
+.center{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+.pinbox{width:400px;background:#fff;border:1px solid #DCE5DE;border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.dots{height:66px;border-radius:14px;background:#F4F7F2;border:3px solid #1F7A4D;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;letter-spacing:10px}
+.dots.bad{border-color:#B42318}
+.err{text-align:center;color:#B42318;font-weight:800}
+.log{flex:1;display:flex;flex-direction:column;gap:14px;padding:18px 20px;min-height:0}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.stat{background:#fff;border:1px solid #DCE5DE;border-radius:14px;padding:10px 14px}
+.stat span{display:block;font-size:14px;font-weight:800;color:#4A5A50}
+.stat b{font-size:30px;font-weight:900}
+.stat.tot{background:#1F7A4D;color:#fff;border-color:#1F7A4D}.stat.tot span{color:#fff}
+.table{flex:1;min-height:0;background:#fff;border:1px solid #DCE5DE;border-radius:18px;overflow:auto}
+.tr{display:grid;grid-template-columns:96px minmax(0,1fr) 54px 74px 100px 150px;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid #EEF2EE;font-size:17px}
+.th{font-size:13px;font-weight:900;color:#4A5A50;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #DCE5DE;position:sticky;top:0;background:#fff}
+.tr.void{color:#6B756F}.tr.void .st{text-decoration:line-through}
+.chip{justify-self:start;padding:3px 10px;border-radius:999px;font-size:14px;font-weight:900}
+.chip.c{background:#DDF0E4;color:#155C39}.chip.v{background:#E1ECFB;color:#0B4FA6}
+.vtag{padding:3px 8px;border-radius:8px;background:#FDE8E6;color:#B42318;font-size:13px;font-weight:900}
+.note{font-size:14px;color:#4A5A50}
+.modal-bg{position:fixed;inset:0;background:rgba(20,30,25,.45);display:flex;align-items:center;justify-content:center;z-index:10}
+.modal{width:440px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.modal .acts{display:flex;gap:10px;justify-content:flex-end}
+
+@media (max-width:1000px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cart{width:320px}.pcol{width:360px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ================= CONFIG ================= */
+const CONFIG = {
+  SYNC_URL: 'https://script.google.com/macros/s/AKfycbwm_1xmcjJDrTRiI1hwjjBzyy6vgj_rPEAlqFNyovTMsVOkIdEnXODNFQn5csLqAegP/exec',
+  TOKEN: 'mm-8da194a897861267',
+  EVENT_DATE: '2026-12-10',          // live mode on this date (Test mode on all other dates)
+  SYNC_STOP: '2026-12-10T19:30:00',  // live auto-sync stops (local time)
+  SYNC_EVERY_MIN: 10,
+  PIN: '1234',                       // parent PIN for the Sales log
+  VENMO_HANDLE: '',                  // e.g. '@Calvin-Wong' (shown under the QR)
+  VENMO_QR: '',                      // e.g. 'img/venmo-qr.png' once the QR screenshot is added
+  PRICE_ONE: 6, PRICE_MULTI: 5
+};
+const PRODUCTS = [
+  { id: 'tiger',    name: 'Shamrock Tiger', img: 'img/tiger.png',    bg: '#FFFFFF', ink: '#1F7A4D' },
+  { id: 'egg',      name: 'SunnySide Egg',  img: 'img/egg.png',      bg: '#FFFFFF', ink: '#7A5A00' },
+  { id: 'candy',    name: 'Candy',          img: 'img/candy.png',    bg: '#FFFFFF', ink: '#11676B' },
+  { id: 'flamingo', name: 'Flamingo',       img: 'img/flamingo.png', bg: '#FFFFFF', ink: '#A3214F' },
+  { id: 'boba',     name: 'Boba Cup',       img: '',                 bg: '#F3E9DD', ink: '#6B4A1F' },
+  { id: 'tart',     name: 'Egg Tart',       img: '',                 bg: '#FFF1D6', ink: '#7A4300' },
+  { id: 'paw',      name: 'Paw Print',      img: '',                 bg: '#EDE5FF', ink: '#5B34B0' }
+];
+
+/* ================= STORAGE ================= */
+const KEY = 'mmpos.v1';
+function loadStore() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.sales)) return s; } catch (e) {}
+  const dev = 'T' + Math.random().toString(36).slice(2, 5).toUpperCase();
+  return { sales: [], seq: 1, device: dev, modeOverride: '', sync: {} };
+}
+let store = loadStore();
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(store)); return true; }
+  catch (e) { ui.flash = 'WARNING: could not save on this tablet. Use the paper tally and tell a parent.'; ui.flashAmber = true; return false; }
+}
+persist();
+if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function(){}); }
+
+/* ================= STATE ================= */
+const ui = { screen: 'sell', cart: {}, entered: '', pin: '', pinWrong: false, unlocked: false, flash: '', flashAmber: false, modal: null, syncing: false };
+
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function today() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function clock(d) { d = d || new Date(); let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + pad(d.getMinutes()) + ' ' + ap; }
+function mode() { return store.modeOverride || (today() === CONFIG.EVENT_DATE ? 'live' : 'test'); }
+function modeSales() { const m = mode(); return store.sales.filter(function (s) { return s.mode === m; }); }
+function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function totals() {
+  let count = 0; PRODUCTS.forEach(function (p) { count += ui.cart[p.id] || 0; });
+  const unit = count >= 2 ? CONFIG.PRICE_MULTI : CONFIG.PRICE_ONE;
+  return { count: count, unit: unit, total: count * unit };
+}
+function itemsText(cart) {
+  return PRODUCTS.filter(function (p) { return cart[p.id]; }).map(function (p) { return cart[p.id] > 1 ? p.name + ' ×' + cart[p.id] : p.name; }).join(', ');
+}
+
+/* ================= ACTIONS ================= */
+function addItem(id, d) {
+  const n = Math.max(0, (ui.cart[id] || 0) + d);
+  if (n) ui.cart[id] = n; else delete ui.cart[id];
+  ui.flash = '';
+}
+function saveSale(pay) {
+  const t = totals(); if (!t.count) return;
+  const received = parseInt(ui.entered || '0', 10);
+  const now = new Date();
+  const sale = {
+    id: store.device + '-' + String(store.seq).padStart(4, '0'),
+    mode: mode(), date: today(), time: clock(now), ts: now.toISOString(),
+    items: itemsText(ui.cart), lines: Object.assign({}, ui.cart),
+    qty: t.count, unit: t.unit, total: t.total, pay: pay,
+    received: pay === 'Cash' ? received : '', change: pay === 'Cash' ? received - t.total : '',
+    voided: false, voidedAt: ''
+  };
+  store.sales.unshift(sale); store.seq++;
+  const ok = persist();
+  ui.cart = {}; ui.entered = ''; ui.screen = 'sell';
+  if (ok) {
+    ui.flashAmber = false;
+    ui.flash = 'Sale saved: $' + t.total + ' ' + pay + '.' + (pay === 'Cash' ? ' Change given $' + sale.change + '.' : '') + ' Ready for the next customer!';
+  }
+}
+function setVoid(id, v) {
+  const s = store.sales.find(function (x) { return x.id === id; }); if (!s) return;
+  s.voided = v; s.voidedAt = v ? clock() : '';
+  persist();
+}
+function lastActive() { return modeSales().find(function (s) { return !s.voided; }); }
+
+/* ================= SYNC ================= */
+function syncInfo() { return store.sync[mode()] || {}; }
+function autoSyncAllowed() { return mode() === 'test' || new Date() <= new Date(CONFIG.SYNC_STOP); }
+async function syncNow(manual) {
+  if (ui.syncing) return;
+  const m = mode(); const list = modeSales();
+  store.sync[m] = Object.assign({}, store.sync[m], { lastTry: Date.now() }); persist();
+  if (!list.length) { if (manual) { ui.flash = 'Nothing to back up yet.'; ui.flashAmber = true; render(); } return; }
+  ui.syncing = true; render();
+  let okTotal = 0; list.forEach(function (s) { if (!s.voided) okTotal += s.total; });
+  const body = { token: CONFIG.TOKEN, test: m === 'test', device: store.device, okTotal: okTotal,
+    sales: list.map(function (s) { return { id: s.id, date: s.date, time: s.time, items: s.items, qty: s.qty, unit: s.unit, total: s.total, pay: s.pay, received: s.received, change: s.change, voided: s.voided, voidedAt: s.voidedAt, lines: s.lines }; }) };
+  try {
+    const ctrl = new AbortController(); const to = setTimeout(function () { ctrl.abort(); }, 30000);
+    const r = await fetch(CONFIG.SYNC_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctrl.signal });
+    clearTimeout(to);
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'failed');
+    store.sync[m] = Object.assign({}, store.sync[m], { lastOk: Date.now(), count: list.length, err: '' });
+    if (manual) { ui.flash = 'Backed up ' + list.length + ' sales to Google Drive.'; ui.flashAmber = false; }
+  } catch (e) {
+    store.sync[m] = Object.assign({}, store.sync[m], { err: navigator.onLine ? 'Backup failed' : 'No internet' });
+    if (manual) { ui.flash = 'Backup did not go through (' + store.sync[m].err + '). Sales are safe on this tablet; it will retry.'; ui.flashAmber = true; }
+  }
+  persist(); ui.syncing = false; render();
+}
+setInterval(function () {
+  if (!autoSyncAllowed()) return;
+  const i = syncInfo(); const due = !i.lastTry || Date.now() - i.lastTry >= CONFIG.SYNC_EVERY_MIN * 60000;
+  if (due && modeSales().length) syncNow(false);
+}, 30000);
+
+/* ================= CSV ================= */
+function exportCsv() {
+  const head = ['sale_id', 'mode', 'date', 'time', 'items', 'qty', 'unit_price', 'total', 'payment', 'cash_received', 'change', 'status', 'voided_at'].concat(PRODUCTS.map(function (p) { return p.name; })).concat(['device']);
+  const rows = modeSales().slice().reverse().map(function (s) {
+    return [s.id, s.mode, s.date, s.time, s.items, s.qty, s.unit, s.total, s.pay, s.received, s.change, s.voided ? 'VOID' : 'OK', s.voidedAt]
+      .concat(PRODUCTS.map(function (p) { return (s.lines && s.lines[p.id]) || 0; })).concat([store.device]);
+  });
+  const csv = [head].concat(rows).map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'POS_sales_' + mode() + '_' + today() + '_' + clock().replace(/[: ]/g, '') + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  ui.flash = 'CSV saved to the tablet\'s Downloads.'; ui.flashAmber = false;
+}
+
+/* ================= RENDER ================= */
+const ICON = {
+  lock: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  check: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>',
+  back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+  dl: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
+  qr: '<svg width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M17 20h4"/></svg>'
+};
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Clear', '0', 'Del'];
+
+function header() {
+  const onPay = ui.screen === 'cash' || ui.screen === 'venmo';
+  const logOn = ui.screen === 'log' || ui.screen === 'pin';
+  const i = syncInfo();
+  let sync;
+  if (ui.syncing) sync = '<span class="badge b-sync">Backing up…</span>';
+  else if (i.err) sync = '<span class="badge b-warn">' + esc(i.err) + ' · will retry</span>';
+  else if (i.lastOk) sync = '<span class="badge b-sync">Last backup ' + clock(new Date(i.lastOk)) + ' ✓</span>';
+  else sync = '<span class="badge b-sync">Not backed up yet</span>';
+  return '<header class="hdr' + (ui.screen === 'venmo' ? ' venmo' : '') + '">' +
+    '<div class="brand"><div class="logo">S</div>Shamrock Makers Shop</div>' +
+    '<div class="hdr-mid">' + (mode() === 'test' ? '<span class="badge b-test">TEST MODE</span>' : '') + sync + '</div>' +
+    (onPay ? '<div class="paytitle">' + (ui.screen === 'cash' ? 'Cash payment' : 'Venmo payment') + '</div>' :
+      '<nav class="tabs"><button class="tab' + (logOn ? '' : ' on') + '" data-a="goSell">Sell</button>' +
+      '<button class="tab' + (logOn ? ' on' : '') + '" data-a="goLog">' + ICON.lock + 'Sales log</button></nav>') +
+    '</header>';
+}
+
+function sellScreen() {
+  const t = totals();
+  let tiles = PRODUCTS.map(function (p) {
+    const q = ui.cart[p.id] || 0;
+    return '<button class="tile' + (q ? ' on' : '') + '" data-a="add" data-id="' + p.id + '" aria-label="Add ' + esc(p.name) + '">' +
+      '<span class="pic" style="background:' + p.bg + '">' + (p.img ? '<img src="' + p.img + '" alt="">' : '<span style="color:' + p.ink + '">Picture coming soon</span>') + '</span>' +
+      '<span class="tname">' + esc(p.name) + '</span>' + (q ? '<span class="qty">×' + q + '</span>' : '') + '</button>';
+  }).join('');
+  let lines = PRODUCTS.filter(function (p) { return ui.cart[p.id]; }).map(function (p) {
+    const q = ui.cart[p.id];
+    return '<div class="line"><div class="n">' + esc(p.name) + '</div>' +
+      '<button class="step" data-a="minus" data-id="' + p.id + '" aria-label="Remove one ' + esc(p.name) + '">−</button>' +
+      '<span class="q">' + q + '</span>' +
+      '<button class="step" data-a="plus" data-id="' + p.id + '" aria-label="Add one ' + esc(p.name) + '">+</button>' +
+      '<span class="p">$' + (q * t.unit) + '</span></div>';
+  }).join('');
+  let deal = t.count === 1 ? 'Add 1 more item and everything is $5 each!' : (t.count >= 2 ? 'Deal! $5 each. They saved $' + t.count + '.' : '');
+  return '<div class="sell"><section class="left">' +
+    '<div class="row"><h1>Tap what they\'re buying</h1><div class="deal-pill">1 for $6 · 2 or more = $5 each</div></div>' +
+    (ui.flash ? '<div class="flash' + (ui.flashAmber ? ' amber' : '') + '">' + (ui.flashAmber ? '' : ICON.check) + esc(ui.flash) + '</div>' : '') +
+    '<div class="grid">' + tiles + '</div>' +
+    '<div class="foot"><button class="btn" data-a="undoAsk">Undo last sale</button><span>Oops right after checkout? Undo it. Older mistakes: ask a parent to open the Sales log.</span></div>' +
+    '</section><aside class="cart">' +
+    '<div class="row"><div style="display:flex;align-items:baseline;gap:8px"><h2>Order</h2><span class="sub">' + t.count + (t.count === 1 ? ' item' : ' items') + '</span></div><button class="btn" data-a="clear">Clear</button></div>' +
+    (t.count ? '<div class="lines">' + lines + '</div>' : '<div class="emptybox">Tap a product to start</div><div style="flex:1"></div>') +
+    (deal ? '<div class="dealbox">' + deal + '</div>' : '') +
+    '<div class="total"><span style="font-size:21px;font-weight:800">Total</span><b>$' + t.total + '</b></div>' +
+    '<div class="pay2"><button class="paybtn cash" data-a="goCash"' + (t.count ? '' : ' disabled') + '>Cash<small>bills &amp; coins</small></button>' +
+    '<button class="paybtn ven" data-a="goVenmo"' + (t.count ? '' : ' disabled') + '>Venmo<small>scan the QR</small></button></div>' +
+    '</aside></div>';
+}
+
+function recap() {
+  const t = totals();
+  return PRODUCTS.filter(function (p) { return ui.cart[p.id]; }).map(function (p) {
+    return '<div class="rline"><span>' + esc(p.name) + ' ×' + ui.cart[p.id] + '</span><span>$' + (ui.cart[p.id] * t.unit) + '</span></div>';
+  }).join('');
+}
+
+function cashScreen() {
+  const t = totals(); const amt = parseInt(ui.entered || '0', 10);
+  const enough = ui.entered !== '' && amt >= t.total;
+  const qv = [t.total, 20, 50].filter(function (v, i, a) { return v >= t.total && a.indexOf(v) === i; });
+  return '<div class="pay"><section class="pcol">' +
+    '<button class="btn" style="align-self:flex-start" data-a="back">' + ICON.back + 'Back to order</button>' +
+    '<div class="card"><div class="sub">They\'re buying</div>' + recap() +
+    '<div style="height:1px;background:#EEF2EE"></div><div class="rline" style="align-items:baseline"><span style="font-size:21px">Total</span><span class="big">$' + t.total + '</span></div></div>' +
+    (enough ? '<div class="change"><span style="font-size:19px;font-weight:800">Give back change</span><b>$' + (amt - t.total) + '</b></div>'
+      : '<div class="need"><span style="font-size:19px;font-weight:800">Type the cash they gave you</span><b>' + (ui.entered === '' ? 'Total is $' + t.total : 'Need $' + (t.total - amt) + ' more') + '</b></div>') +
+    (enough ? '<button class="savebtn" data-a="saveCash">' + ICON.check + 'Done – save sale</button>' : '') +
+    '</section><section class="kpad"><h1>How much cash did they give you?</h1>' +
+    '<div class="disp">$' + (ui.entered || '0') + '</div>' +
+    '<div class="quick">' + qv.map(function (v) { return '<button data-a="quick" data-v="' + v + '">' + (v === t.total ? 'Exact $' + v : '$' + v) + '</button>'; }).join('') + '</div>' +
+    '<div class="keys">' + KEYS.map(function (k) { return '<button data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
+    '</section></div>';
+}
+
+function venmoScreen() {
+  const t = totals();
+  return '<div class="pay ven"><section class="pcol" style="width:440px">' +
+    '<button class="btn" style="align-self:flex-start;border-color:#C7D5E8" data-a="back">' + ICON.back + 'Back to order</button>' +
+    '<div class="card" style="border-color:#D6E1F0"><span class="sub" style="font-size:17px">Ask them to pay</span><span style="font-size:84px;font-weight:900;line-height:1;color:#0B5CC4">$' + t.total + '</span>' +
+    '<span class="sub">' + t.count + (t.count === 1 ? ' item' : ' items') + ' · ' + esc(itemsText(ui.cart)) + '</span></div>' +
+    '<ol class="steps"><li><i>1</i>Turn the tablet so they can scan</li><li><i>2</i>They pay $' + t.total + ' on their phone</li><li><i>3</i>A parent checks the Venmo phone</li></ol>' +
+    '<div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">' +
+    '<button class="savebtn g" data-a="saveVenmo">' + ICON.check + 'Parent: payment received</button>' +
+    '<button class="btn" style="height:52px;border-color:#C7D5E8" data-a="back">It didn\'t go through – go back</button></div>' +
+    '</section><section class="qrside"><span style="font-size:25px;font-weight:900">Scan to pay with Venmo</span>' +
+    (CONFIG.VENMO_QR ? '<img class="qrimg" src="' + CONFIG.VENMO_QR + '" alt="Venmo QR code">' :
+      '<div class="qrbox">' + ICON.qr + '<span style="font-size:21px;font-weight:900">Venmo QR code goes here</span><span style="font-size:15px">Add the QR picture before the dry run</span></div>') +
+    '<span style="font-size:21px;font-weight:800;color:#4A5A50">' + esc(CONFIG.VENMO_HANDLE || '@[YOUR-VENMO]') + '</span>' +
+    '</section></div>';
+}
+
+function pinScreen() {
+  return '<div class="center"><div class="pinbox"><h1 style="text-align:center">Parent PIN</h1>' +
+    '<div class="dots' + (ui.pinWrong ? ' bad' : '') + '">' + (ui.pin ? '●●●●'.slice(0, ui.pin.length) : '····') + '</div>' +
+    (ui.pinWrong ? '<div class="err">Wrong PIN, try again</div>' : '') +
+    '<div class="keys" style="flex:none">' + KEYS.map(function (k) { return '<button style="height:58px" data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
+    '<button class="btn" data-a="goSell">Cancel</button></div></div>';
+}
+
+function logScreen() {
+  const list = modeSales();
+  let n = 0, items = 0, cash = 0, ven = 0;
+  list.forEach(function (s) { if (s.voided) return; n++; items += s.qty; if (s.pay === 'Cash') cash += s.total; else ven += s.total; });
+  const rows = list.map(function (s) {
+    return '<div class="tr' + (s.voided ? ' void' : '') + '"><span>' + esc(s.time) + '</span><span class="st">' + esc(s.items) + '</span><span class="st">' + s.qty + '</span>' +
+      '<span class="st" style="font-weight:900">$' + s.total + '</span><span class="chip ' + (s.pay === 'Cash' ? 'c' : 'v') + '">' + s.pay + '</span>' +
+      (s.voided ? '<span style="display:flex;align-items:center;gap:6px"><span class="vtag">VOID</span><button class="btn" style="height:42px;padding:0 10px" data-a="restore" data-id="' + s.id + '">Restore</button></span>'
+        : '<button class="btn red" style="height:42px" data-a="voidAsk" data-id="' + s.id + '">Void sale</button>') + '</div>';
+  }).join('');
+  return '<div class="log"><div class="row"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h1>Sales log</h1>' +
+    '<span class="badge b-warn">Parent mode · unlocked</span>' + (mode() === 'test' ? '<span class="badge b-test">TEST data</span>' : '<span class="badge" style="background:#DDF0E4;color:#155C39">EVENT data</span>') + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn green" data-a="sync">Sync now</button><button class="btn green" data-a="csv">' + ICON.dl + 'Export CSV</button>' +
+    '<button class="btn" data-a="settings">Settings</button><button class="btn dark" data-a="lock">' + ICON.lock + 'Lock</button></div></div>' +
+    '<div class="stats"><div class="stat"><span>Sales</span><b>' + n + '</b></div><div class="stat"><span>Items sold</span><b>' + items + '</b></div>' +
+    '<div class="stat"><span>Cash in box</span><b style="color:#1F7A4D">$' + cash + '</b></div><div class="stat"><span>Venmo</span><b style="color:#0B5CC4">$' + ven + '</b></div>' +
+    '<div class="stat tot"><span>Total</span><b>$' + (cash + ven) + '</b></div></div>' +
+    '<div class="table"><div class="tr th"><span>Time</span><span>Items</span><span>Qty</span><span>Total</span><span>Paid by</span><span>Fix</span></div>' +
+    (rows || '<div style="padding:34px;text-align:center;font-size:18px;color:#4A5A50">No sales yet.</div>') + '</div>' +
+    '<div class="note">Voided sales stay in the log, the CSV and the Google sheet marked VOID. They don\'t count in the totals. Device: ' + store.device + '</div></div>';
+}
+
+function modalHtml() {
+  const m = ui.modal; if (!m) return '';
+  let body = '';
+  if (m.type === 'undo') {
+    const s = lastActive();
+    body = s ? '<h2>Undo the last sale?</h2><div style="font-size:18px">' + esc(s.time) + ' · ' + esc(s.items) + ' · $' + s.total + ' ' + s.pay + '</div><div class="note">It will be marked VOID. Give back the money or the items.</div>' +
+      '<div class="acts"><button class="btn" data-a="closeModal">No, keep it</button><button class="btn red" data-a="undoYes" data-id="' + s.id + '">Yes, undo</button></div>'
+      : '<h2>Nothing to undo</h2><div class="acts"><button class="btn" data-a="closeModal">OK</button></div>';
+  } else if (m.type === 'void') {
+    const s = store.sales.find(function (x) { return x.id === m.id; });
+    body = '<h2>Void this sale?</h2><div style="font-size:18px">' + esc(s.time) + ' · ' + esc(s.items) + ' · $' + s.total + ' ' + s.pay + '</div>' +
+      '<div class="acts"><button class="btn" data-a="closeModal">Cancel</button><button class="btn red" data-a="voidYes" data-id="' + s.id + '">Void sale</button></div>';
+  } else if (m.type === 'settings') {
+    const auto = today() === CONFIG.EVENT_DATE ? 'EVENT' : 'TEST';
+    body = '<h2>Settings</h2><div class="note">Mode decides which Google sheet tab gets the sales. Automatic = EVENT on Dec 10, TEST on other days. Now: <b>' + (mode() === 'test' ? 'TEST' : 'EVENT') + '</b> (automatic would be ' + auto + ').</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn' + (store.modeOverride === '' ? ' green' : '') + '" data-a="mode" data-v="">Automatic</button>' +
+      '<button class="btn' + (store.modeOverride === 'test' ? ' green' : '') + '" data-a="mode" data-v="test">Force TEST</button>' +
+      '<button class="btn' + (store.modeOverride === 'live' ? ' green' : '') + '" data-a="mode" data-v="live">Force EVENT</button></div>' +
+      '<div class="note">After the dry run, clear the practice sales (they stay in the Test tab of the sheet).</div>' +
+      '<div class="acts"><button class="btn red" data-a="clearTest">Clear TEST sales on tablet</button><button class="btn dark" data-a="closeModal">Done</button></div>';
+  } else if (m.type === 'clearTest') {
+    body = '<h2>Clear all TEST sales from this tablet?</h2><div class="note">EVENT sales are never touched. The Test tab in Google Drive keeps its copy.</div>' +
+      '<div class="acts"><button class="btn" data-a="closeModal">Cancel</button><button class="btn red" data-a="clearTestYes">Clear TEST sales</button></div>';
+  }
+  return '<div class="modal-bg"><div class="modal">' + body + '</div></div>';
+}
+
+function render() {
+  let main = '';
+  if (ui.screen === 'sell') main = sellScreen();
+  else if (ui.screen === 'cash') main = cashScreen();
+  else if (ui.screen === 'venmo') main = venmoScreen();
+  else if (ui.screen === 'pin') main = pinScreen();
+  else if (ui.screen === 'log') main = logScreen();
+  document.getElementById('app').innerHTML = header() + main + modalHtml();
+}
+
+/* ================= EVENTS ================= */
+document.getElementById('app').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
+  const a = b.dataset.a, id = b.dataset.id;
+  switch (a) {
+    case 'add': addItem(id, 1); break;
+    case 'plus': addItem(id, 1); break;
+    case 'minus': addItem(id, -1); break;
+    case 'clear': ui.cart = {}; ui.flash = ''; break;
+    case 'goCash': ui.screen = 'cash'; ui.entered = ''; ui.flash = ''; break;
+    case 'goVenmo': ui.screen = 'venmo'; ui.flash = ''; break;
+    case 'back': ui.screen = 'sell'; ui.entered = ''; break;
+    case 'quick': ui.entered = b.dataset.v; break;
+    case 'saveCash': saveSale('Cash'); break;
+    case 'saveVenmo': saveSale('Venmo'); break;
+    case 'goSell': ui.screen = 'sell'; ui.pin = ''; ui.pinWrong = false; break;
+    case 'goLog': ui.screen = ui.unlocked ? 'log' : 'pin'; ui.pin = ''; ui.pinWrong = false; ui.flash = ''; break;
+    case 'lock': ui.unlocked = false; ui.screen = 'sell'; break;
+    case 'key': key(b.dataset.k); break;
+    case 'undoAsk': ui.modal = { type: 'undo' }; break;
+    case 'undoYes': { setVoid(id, true); const s = store.sales.find(function (x) { return x.id === id; }); ui.modal = null; ui.flashAmber = true; ui.flash = 'Last sale undone ($' + s.total + ' ' + s.pay + '). It shows as VOID in the Sales log.'; break; }
+    case 'voidAsk': ui.modal = { type: 'void', id: id }; break;
+    case 'voidYes': setVoid(id, true); ui.modal = null; break;
+    case 'restore': setVoid(id, false); break;
+    case 'closeModal': ui.modal = null; break;
+    case 'sync': syncNow(true); return;
+    case 'csv': exportCsv(); break;
+    case 'settings': ui.modal = { type: 'settings' }; break;
+    case 'mode': store.modeOverride = b.dataset.v; persist(); break;
+    case 'clearTest': ui.modal = { type: 'clearTest' }; break;
+    case 'clearTestYes': store.sales = store.sales.filter(function (s) { return s.mode !== 'test'; }); persist(); ui.modal = null; break;
+  }
+  render();
+});
+function key(k) {
+  if (ui.screen === 'pin') {
+    let p = ui.pin;
+    if (k === 'Clear') p = ''; else if (k === 'Del') p = p.slice(0, -1); else if (p.length < 4) p += k;
+    if (p.length === 4) {
+      if (p === CONFIG.PIN) { ui.unlocked = true; ui.screen = 'log'; ui.pin = ''; ui.pinWrong = false; }
+      else { ui.pin = ''; ui.pinWrong = true; }
+      return;
+    }
+    ui.pin = p; ui.pinWrong = false; return;
+  }
+  let v = ui.entered;
+  if (k === 'Clear') v = ''; else if (k === 'Del') v = v.slice(0, -1); else if (v.length < 3) v = (v === '0' ? '' : v) + k;
+  ui.entered = v;
+}
+window.addEventListener('online', function () { render(); });
+window.addEventListener('offline', function () { render(); });
+setInterval(render, 60000); // keep badges fresh
+
+render();
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+</script>
+</body>
+</html>
