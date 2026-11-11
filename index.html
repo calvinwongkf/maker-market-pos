@@ -102,7 +102,7 @@ h2{margin:0;font-size:24px;font-weight:900}
 .steps i{font-style:normal;width:38px;height:38px;flex-shrink:0;border-radius:999px;background:#E1ECFB;color:#0B4FA6;display:flex;align-items:center;justify-content:center;font-weight:900}
 .qrside{flex:1;min-width:0;background:#fff;border:1px solid #D6E1F0;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
 .qrbox{width:min(380px,60vh);aspect-ratio:1;border-radius:22px;border:4px dashed #0B5CC4;background:#F2F6FB;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#0B4FA6;text-align:center;padding:20px}
-.qrimg{width:min(380px,60vh);aspect-ratio:1;object-fit:contain}
+.qrimg{width:min(430px,62vh);aspect-ratio:1;object-fit:contain;image-rendering:auto}
 
 /* pin + log */
 .center{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -143,8 +143,8 @@ const CONFIG = {
   SYNC_STOP: '2026-12-10T19:30:00',  // live auto-sync stops (local time)
   SYNC_EVERY_MIN: 10,
   PIN: '1234',                       // parent PIN for the Sales log
-  VENMO_HANDLE: '',                  // e.g. '@Calvin-Wong' (shown under the QR)
-  VENMO_QR: '',                      // e.g. 'img/venmo-qr.png' once the QR screenshot is added
+  VENMO_HANDLE: '@KwokFeng-Wong',                // e.g. '@Calvin-Wong' (shown under the QR)
+  VENMO_QR: 'img/venmo-qr.png',                // e.g. 'img/venmo-qr.png' once the QR screenshot is added
   ZELLE_NAME: '',                    // name or phone/email shown under the Zelle QR
   ZELLE_QR: '',                      // e.g. 'img/zelle-qr.png'
   PRICE_ONE: 6, PRICE_MULTI: 5
