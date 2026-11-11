@@ -503,7 +503,19 @@ window.addEventListener('offline', function () { render(); });
 setInterval(render, 60000); // keep badges fresh
 
 render();
-if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {});
+  // A new version was published: reload once, but never in the middle of a sale.
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloaded) return;
+    const tryReload = function () {
+      if (ui.screen === 'sell' && !totals().count && !ui.modal) { reloaded = true; location.reload(); }
+      else setTimeout(tryReload, 5000);
+    };
+    tryReload();
+  });
+}
 </script>
 </body>
 </html>
