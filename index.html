@@ -106,6 +106,11 @@ h2{margin:0;font-size:24px;font-weight:900}
 .pfield b{font-size:26px;font-weight:900;line-height:1.1}
 .pfield.on{border-color:#1F7A4D;background:#DDF0E4}
 .warn{font-size:16px;color:#B42318;font-weight:800;text-align:center}
+.pfield.big{width:100%;height:130px;border-radius:18px}
+.pfield.big small{font-size:18px}
+.pfield.big b{font-size:60px}
+.tr.price{background:#FFF8E8;color:#7A4300}
+.tr.price .pmsg{grid-column:2 / span 5;font-weight:800}
 .kpad{flex:1;min-width:0;background:#fff;border:1px solid #DCE5DE;border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px}
 .disp{height:84px;border-radius:16px;background:#F4F7F2;border:3px solid #1F7A4D;display:flex;align-items:center;justify-content:flex-end;padding:0 24px;font-size:58px;font-weight:900}
 .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -177,19 +182,20 @@ const PRODUCTS = [
 
 /* ================= STORAGE ================= */
 const KEY = 'mmpos.v1';
-// Every product gets a 1-item price and a 2-or-more price. Missing values fall back to CONFIG.
-function normalizePrices(saved) {
-  const out = {};
-  PRODUCTS.forEach(function (p) {
-    const s = (saved && saved[p.id]) || {};
-    out[p.id] = { one: Number(s.one) || CONFIG.PRICE_ONE, multi: Number(s.multi) || CONFIG.PRICE_MULTI };
-  });
-  return out;
+// One shared price pair for every product: a 1-item price and a "2 or more (each)" price.
+// The Google Sheet (Settings tab) is the master copy; the tablet keeps the last prices it saw.
+function normalizePrices(p) {
+  p = p || {};
+  const one = parseInt(p.one, 10), multi = parseInt(p.multi, 10);
+  return { one: one >= 1 ? one : CONFIG.PRICE_ONE, multi: multi >= 1 ? multi : CONFIG.PRICE_MULTI, updatedAt: Number(p.updatedAt) || 0 };
 }
 function loadStore() {
-  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.sales)) { s.prices = normalizePrices(s.prices); return s; } } catch (e) {}
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.sales)) { s.prices = normalizePrices(s.prices); if (!Array.isArray(s.priceLog)) s.priceLog = []; return s; }
+  } catch (e) {}
   const dev = 'T' + Math.random().toString(36).slice(2, 5).toUpperCase();
-  return { sales: [], seq: 1, device: dev, modeOverride: '', sync: {}, prices: normalizePrices({}) };
+  return { sales: [], seq: 1, device: dev, modeOverride: '', sync: {}, prices: normalizePrices({}), priceLog: [] };
 }
 let store = loadStore();
 function persist() {
@@ -200,7 +206,7 @@ persist();
 if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function(){}); }
 
 /* ================= STATE ================= */
-const ui = { screen: 'sell', cart: {}, entered: '', pin: '', pinWrong: false, pinNext: 'log', unlocked: false, flash: '', flashAmber: false, modal: null, syncing: false, pdraft: null, psel: null, override: null, adjEntered: '' };
+const ui = { screen: 'sell', cart: {}, entered: '', pin: '', pinWrong: false, pinNext: 'log', unlocked: false, flash: '', flashAmber: false, modal: null, syncing: false, pdraft: null, pfield: 'one', pMsg: '', pMsgAmber: false };
 
 function pad(n) { return (n < 10 ? '0' : '') + n; }
 function today() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -208,21 +214,12 @@ function clock(d) { d = d || new Date(); let h = d.getHours(); const ap = h >= 1
 function mode() { return store.modeOverride || (today() === CONFIG.EVENT_DATE ? 'live' : 'test'); }
 function modeSales() { const m = mode(); return store.sales.filter(function (s) { return s.mode === m; }); }
 function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-function priceFor(id, multi) { const p = store.prices[id]; return multi ? p.multi : p.one; }
+function unitPrice(multi) { return multi ? store.prices.multi : store.prices.one; }
 function totals() {
   let count = 0; PRODUCTS.forEach(function (p) { count += ui.cart[p.id] || 0; });
-  const multi = count >= 2; // the 2-or-more prices apply to the whole order
-  let total = 0, full = 0; const unitSet = {};
-  PRODUCTS.forEach(function (p) {
-    const q = ui.cart[p.id] || 0; if (!q) return;
-    const u = priceFor(p.id, multi);
-    total += q * u; full += q * priceFor(p.id, false); unitSet[u] = true;
-  });
-  const units = Object.keys(unitSet);
-  // unit: the single unit price when every item had the same price, otherwise 'varies'
-  // override: a total a parent typed in for this order (null = use the calculated total)
-  const adjusted = ui.override !== null;
-  return { count: count, multi: multi, total: adjusted ? ui.override.total : total, calc: total, adjusted: adjusted, saved: full - total, unit: units.length === 1 ? Number(units[0]) : 'varies' };
+  const multi = count >= 2; // the "2 or more" price applies to every item once the order has 2+ items of any kind
+  const unit = unitPrice(multi);
+  return { count: count, multi: multi, unit: unit, total: count * unit, saved: count * store.prices.one - count * unit };
 }
 function itemsText(cart) {
   return PRODUCTS.filter(function (p) { return cart[p.id]; }).map(function (p) { return cart[p.id] > 1 ? p.name + ' ×' + cart[p.id] : p.name; }).join(', ');
@@ -232,7 +229,6 @@ function itemsText(cart) {
 function addItem(id, d) {
   const n = Math.max(0, (ui.cart[id] || 0) + d);
   if (n) ui.cart[id] = n; else delete ui.cart[id];
-  ui.override = null; // items changed, so a typed-in total no longer fits
   ui.flash = '';
 }
 function saveSale(pay) {
@@ -245,11 +241,11 @@ function saveSale(pay) {
     items: itemsText(ui.cart), lines: Object.assign({}, ui.cart),
     qty: t.count, unit: t.unit, total: t.total, pay: pay,
     received: pay === 'Cash' ? received : '', change: pay === 'Cash' ? received - t.total : '',
-    voided: false, voidedAt: '', calc: t.calc, adjusted: t.adjusted
+    voided: false, voidedAt: ''
   };
   store.sales.unshift(sale); store.seq++;
   const ok = persist();
-  ui.cart = {}; ui.entered = ''; ui.screen = 'sell'; ui.override = null;
+  ui.cart = {}; ui.entered = ''; ui.screen = 'sell';
   if (ok) {
     ui.flashAmber = false;
     ui.flash = 'Sale saved: $' + t.total + ' ' + pay + '.' + (pay === 'Cash' ? ' Change given $' + sale.change + '.' : '') + ' Ready for the next customer!';
@@ -269,19 +265,22 @@ async function syncNow(manual) {
   if (ui.syncing) return;
   const m = mode(); const list = modeSales();
   store.sync[m] = Object.assign({}, store.sync[m], { lastTry: Date.now() }); persist();
-  if (!list.length) { if (manual) { ui.flash = 'Nothing to back up yet.'; ui.flashAmber = true; render(); } return; }
   ui.syncing = true; render();
   let okTotal = 0; list.forEach(function (s) { if (!s.voided) okTotal += s.total; });
+  // Every backup also sends the prices and the price-change log, and gets back the sheet's prices.
   const body = { token: CONFIG.TOKEN, test: m === 'test', device: store.device, okTotal: okTotal,
-    sales: list.map(function (s) { return { id: s.id, date: s.date, time: s.time, items: s.items, qty: s.qty, unit: s.unit, total: s.total, pay: s.pay, received: s.received, change: s.change, voided: s.voided, voidedAt: s.voidedAt, lines: s.lines, calc: s.calc, adjusted: !!s.adjusted }; }) };
+    prices: store.prices, priceLog: store.priceLog,
+    sales: list.map(function (s) { return { id: s.id, date: s.date, time: s.time, items: s.items, qty: s.qty, unit: s.unit, total: s.total, pay: s.pay, received: s.received, change: s.change, voided: s.voided, voidedAt: s.voidedAt, lines: s.lines }; }) };
   try {
     const ctrl = new AbortController(); const to = setTimeout(function () { ctrl.abort(); }, 30000);
     const r = await fetch(CONFIG.SYNC_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctrl.signal });
     clearTimeout(to);
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'failed');
+    // Take the sheet's prices if they are newer than the ones on this tablet.
+    if (j.prices && Number(j.prices.updatedAt) > (store.prices.updatedAt || 0)) store.prices = normalizePrices(j.prices);
     store.sync[m] = Object.assign({}, store.sync[m], { lastOk: Date.now(), count: list.length, err: '' });
-    if (manual) { ui.flash = 'Backed up ' + list.length + ' sales to Google Drive.'; ui.flashAmber = false; }
+    if (manual) { ui.flash = 'Backed up ' + list.length + ' sales to Google Drive. Prices are up to date.'; ui.flashAmber = false; }
   } catch (e) {
     store.sync[m] = Object.assign({}, store.sync[m], { err: navigator.onLine ? 'Backup failed' : 'No internet' });
     if (manual) { ui.flash = 'Backup did not go through (' + store.sync[m].err + '). Sales are safe on this tablet; it will retry.'; ui.flashAmber = true; }
@@ -291,14 +290,14 @@ async function syncNow(manual) {
 setInterval(function () {
   if (!autoSyncAllowed()) return;
   const i = syncInfo(); const due = !i.lastTry || Date.now() - i.lastTry >= CONFIG.SYNC_EVERY_MIN * 60000;
-  if (due && modeSales().length) syncNow(false);
+  if (due) syncNow(false);
 }, 30000);
 
 /* ================= CSV ================= */
 function exportCsv() {
-  const head = ['sale_id', 'mode', 'date', 'time', 'items', 'qty', 'unit_price', 'total', 'payment', 'cash_received', 'change', 'status', 'voided_at', 'calculated_total', 'adjusted'].concat(PRODUCTS.map(function (p) { return p.name; })).concat(['device']);
+  const head = ['sale_id', 'mode', 'date', 'time', 'items', 'qty', 'unit_price', 'total', 'payment', 'cash_received', 'change', 'status', 'voided_at'].concat(PRODUCTS.map(function (p) { return p.name; })).concat(['device']);
   const rows = modeSales().slice().reverse().map(function (s) {
-    return [s.id, s.mode, s.date, s.time, s.items, s.qty, s.unit, s.total, s.pay, s.received, s.change, s.voided ? 'VOID' : 'OK', s.voidedAt, s.calc == null ? s.total : s.calc, s.adjusted ? 'YES' : '']
+    return [s.id, s.mode, s.date, s.time, s.items, s.qty, s.unit, s.total, s.pay, s.received, s.change, s.voided ? 'VOID' : 'OK', s.voidedAt]
       .concat(PRODUCTS.map(function (p) { return (s.lines && s.lines[p.id]) || 0; })).concat([store.device]);
   });
   const csv = [head].concat(rows).map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\n');
@@ -351,20 +350,23 @@ function sellScreen() {
     const q = ui.cart[p.id] || 0;
     return '<button class="tile' + (q ? ' on' : '') + '" data-a="add" data-id="' + p.id + '" aria-label="Add ' + esc(p.name) + '">' +
       '<span class="pic" style="background:' + p.bg + '">' + (p.img ? '<img src="' + p.img + '" alt="">' : '<span style="color:' + p.ink + '">Picture coming soon</span>') + '</span>' +
-      '<span class="tname">' + esc(p.name) + '<span class="tprice">$' + priceFor(p.id, false) + '</span><span class="tbulk">Any 2 or more items: $' + priceFor(p.id, true) + ' each</span></span>' + (q ? '<span class="qty">×' + q + '</span>' : '') + '</button>';
+      '<span class="tname">' + esc(p.name) + '<span class="tprice">$' + store.prices.one + '</span></span>' + (q ? '<span class="qty">×' + q + '</span>' : '') + '</button>';
   }).join('');
   let lines = PRODUCTS.filter(function (p) { return ui.cart[p.id]; }).map(function (p) {
     const q = ui.cart[p.id];
-    return '<div class="line"><div class="n">' + esc(p.name) + '<small>' +
-      (t.multi && priceFor(p.id, true) !== priceFor(p.id, false) ? '$' + priceFor(p.id, true) + ' each <s>$' + priceFor(p.id, false) + '</s>' : '$' + priceFor(p.id, false) + ' each') + '</small></div>' +
+    return '<div class="line"><div class="n">' + esc(p.name) + '<small>$' + t.unit + ' each</small></div>' +
       '<button class="step" data-a="minus" data-id="' + p.id + '" aria-label="Remove one ' + esc(p.name) + '">−</button>' +
       '<span class="q">' + q + '</span>' +
       '<button class="step" data-a="plus" data-id="' + p.id + '" aria-label="Add one ' + esc(p.name) + '">+</button>' +
-      '<span class="p">$' + (q * priceFor(p.id, t.multi)) + '</span></div>';
+      '<span class="p">$' + (q * t.unit) + '</span></div>';
   }).join('');
-  let deal = t.count === 1 ? 'Add 1 more item of any kind and every item gets cheaper!' : (t.count >= 2 ? (t.saved > 0 ? 'Deal! Every item is cheaper. You save $' + t.saved + '.' : 'Deal! Any 2 or more items: every item is cheaper.') : '');
+  const P = store.prices, hasDeal = P.multi < P.one;
+  let deal = '';
+  if (hasDeal && t.count === 1) deal = 'Add 1 more item and everything is $' + P.multi + ' each!';
+  if (hasDeal && t.count >= 2) deal = 'Deal! $' + P.multi + ' each. They saved $' + t.saved + '.';
+  const pill = hasDeal ? '1 for $' + P.one + ' · 2 or more = $' + P.multi + ' each' : 'Every item $' + P.one;
   return '<div class="sell"><section class="left">' +
-    '<div class="row"><h1>Tap what they\'re buying</h1><div class="deal-pill">Any 2 or more items, any mix: every item is cheaper!</div></div>' +
+    '<div class="row"><h1>Tap what they\'re buying</h1><div class="deal-pill">' + pill + '</div></div>' +
     (ui.flash ? '<div class="flash' + (ui.flashAmber ? ' amber' : '') + '">' + (ui.flashAmber ? '' : ICON.check) + esc(ui.flash) + '</div>' : '') +
     '<div class="grid">' + tiles + '</div>' +
     '<div class="foot"><button class="btn" data-a="undoAsk">Undo last sale</button><span>Oops right after checkout? Undo it. Older mistakes: ask a parent to open the Sales log.</span></div>' +
@@ -373,9 +375,6 @@ function sellScreen() {
     (t.count ? '<div class="lines">' + lines + '</div>' : '<div class="emptybox">Tap a product to start</div><div style="flex:1"></div>') +
     (deal ? '<div class="dealbox">' + deal + '</div>' : '') +
     '<div class="total"><span style="font-size:21px;font-weight:800">Total</span><b>$' + t.total + '</b></div>' +
-    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
-    (t.adjusted ? '<span class="note">Total changed by a parent (calculated $' + t.calc + ')</span>' : '') +
-    '<button class="btn" style="height:42px" data-a="adjustAsk"' + (t.count ? '' : ' disabled') + '>' + ICON.lock + 'Change total</button></div>' +
     '<div class="pay2"><button class="paybtn cash" data-a="goCash"' + (t.count ? '' : ' disabled') + '>Cash<small>bills &amp; coins</small></button>' +
     '<button class="paybtn ven" data-a="goVenmo"' + (t.count ? '' : ' disabled') + '>Venmo<small>scan the QR</small></button>' +
     '<button class="paybtn zel" data-a="goZelle"' + (t.count ? '' : ' disabled') + '>Zelle<small>scan the QR</small></button></div>' +
@@ -385,7 +384,7 @@ function sellScreen() {
 function recap() {
   const t = totals();
   return PRODUCTS.filter(function (p) { return ui.cart[p.id]; }).map(function (p) {
-    return '<div class="rline"><span>' + esc(p.name) + ' ×' + ui.cart[p.id] + '</span><span>$' + (ui.cart[p.id] * priceFor(p.id, t.multi)) + '</span></div>';
+    return '<div class="rline"><span>' + esc(p.name) + ' ×' + ui.cart[p.id] + ' <small style="font-size:15px;color:#4A5A50">· $' + t.unit + ' each</small></span><span>$' + (ui.cart[p.id] * t.unit) + '</span></div>';
   }).join('');
 }
 
@@ -437,9 +436,20 @@ function logScreen() {
   const list = modeSales();
   let n = 0, items = 0, cash = 0, ven = 0, zel = 0;
   list.forEach(function (s) { if (s.voided) return; n++; items += s.qty; if (s.pay === 'Cash') cash += s.total; else if (s.pay === 'Zelle') zel += s.total; else ven += s.total; });
-  const rows = list.map(function (s) {
+  // Sales for this mode plus every price change, newest first.
+  const entries = list.map(function (s) { return { kind: 'sale', ts: s.ts || '', s: s }; })
+    .concat(store.priceLog.map(function (c) { return { kind: 'price', ts: c.ts, c: c }; }))
+    .sort(function (a, b) { return a.ts < b.ts ? 1 : (a.ts > b.ts ? -1 : 0); });
+  const rows = entries.map(function (e) {
+    if (e.kind === 'price') {
+      const c = e.c, parts = [];
+      if (c.fromOne !== c.toOne) parts.push('1 item $' + c.fromOne + ' → $' + c.toOne);
+      if (c.fromMulti !== c.toMulti) parts.push('2 or more $' + c.fromMulti + ' → $' + c.toMulti);
+      return '<div class="tr price"><span>' + esc(c.time) + '</span><span class="pmsg">Prices updated: ' + esc(parts.join(', ')) + '</span></div>';
+    }
+    const s = e.s;
     return '<div class="tr' + (s.voided ? ' void' : '') + '"><span>' + esc(s.time) + '</span><span class="st">' + esc(s.items) + '</span><span class="st">' + s.qty + '</span>' +
-      '<span class="st" style="font-weight:900">$' + s.total + (s.adjusted ? '<small style="display:block;font-size:13px;color:#7A4300">was $' + s.calc + '</small>' : '') + '</span><span class="chip ' + (s.pay === 'Cash' ? 'c' : (s.pay === 'Zelle' ? 'z' : 'v')) + '">' + s.pay + '</span>' +
+      '<span class="st" style="font-weight:900">$' + s.total + '</span><span class="chip ' + (s.pay === 'Cash' ? 'c' : (s.pay === 'Zelle' ? 'z' : 'v')) + '">' + s.pay + '</span>' +
       (s.voided ? '<span style="display:flex;align-items:center;gap:6px"><span class="vtag">VOID</span><button class="btn" style="height:42px;padding:0 10px" data-a="restore" data-id="' + s.id + '">Restore</button></span>'
         : '<button class="btn red" style="height:42px" data-a="voidAsk" data-id="' + s.id + '">Void sale</button>') + '</div>';
   }).join('');
@@ -452,7 +462,7 @@ function logScreen() {
     '<div class="stat tot"><span>Total</span><b>$' + (cash + ven + zel) + '</b></div></div>' +
     '<div class="table"><div class="tr th"><span>Time</span><span>Items</span><span>Qty</span><span>Total</span><span>Paid by</span><span>Fix</span></div>' +
     (rows || '<div style="padding:34px;text-align:center;font-size:18px;color:#4A5A50">No sales yet.</div>') + '</div>' +
-    '<div class="note">Voided sales stay in the log, the CSV and the Google sheet marked VOID. They don\'t count in the totals. Device: ' + store.device + '</div></div>';
+    '<div class="note">Voided sales stay in the log, the CSV and the Google sheet marked VOID. They don\'t count in the totals. Price changes are listed here too. Device: ' + store.device + '</div></div>';
 }
 
 /* ================= PRICING (parent PIN) ================= */
@@ -465,46 +475,52 @@ function openScreen(s) {
   ui.screen = s;
   if (s === 'pricing') {
     // Work on a draft copy so Cancel throws the changes away.
-    ui.pdraft = {};
-    PRODUCTS.forEach(function (p) { ui.pdraft[p.id] = { one: String(store.prices[p.id].one), multi: String(store.prices[p.id].multi) }; });
-    ui.psel = { id: PRODUCTS[0].id, f: 'one' };
-    ui.pMsg = '';
+    ui.pdraft = { one: String(store.prices.one), multi: String(store.prices.multi) };
+    ui.pfield = 'one'; ui.pMsg = ''; ui.pMsgAmber = false;
   }
 }
-function pricesValid(d) {
-  return PRODUCTS.every(function (p) {
-    return ['one', 'multi'].every(function (f) { const v = d[p.id][f]; return /^\d{1,3}$/.test(v) && parseInt(v, 10) >= 1; });
-  });
+// Returns '' when the draft is OK, otherwise the problem to show.
+function priceProblem(d) {
+  if (!/^\d{1,3}$/.test(d.one) || parseInt(d.one, 10) < 1 || !/^\d{1,3}$/.test(d.multi) || parseInt(d.multi, 10) < 1) return 'Both prices need a number from 1 to 999.';
+  if (parseInt(d.multi, 10) > parseInt(d.one, 10)) return 'The "2 or more" price must be the same as or lower than the 1-item price.';
+  return '';
 }
 function savePrices() {
-  if (!pricesValid(ui.pdraft)) return;
-  PRODUCTS.forEach(function (p) { store.prices[p.id] = { one: parseInt(ui.pdraft[p.id].one, 10), multi: parseInt(ui.pdraft[p.id].multi, 10) }; });
-  // Stay on the Pricing page; the draft already matches what was saved.
+  if (priceProblem(ui.pdraft)) return;
+  const one = parseInt(ui.pdraft.one, 10), multi = parseInt(ui.pdraft.multi, 10);
+  const old = store.prices;
+  if (one === old.one && multi === old.multi) { ui.pMsg = 'No change: those are already the prices.'; ui.pMsgAmber = true; return; }
+  const now = new Date();
+  store.priceLog.push({ id: store.device + '-P' + now.getTime(), ts: now.toISOString(), date: today(), time: clock(now), mode: mode(),
+    fromOne: old.one, toOne: one, fromMulti: old.multi, toMulti: multi, device: store.device });
+  store.prices = { one: one, multi: multi, updatedAt: now.getTime() };
   const ok = persist();
-  ui.pMsg = ok ? 'Prices saved. The Sell tiles now show them.' : 'Could not save on this tablet. Tell a parent.';
+  ui.pMsg = ok ? 'Prices saved. Sending them to the Google Sheet…' : 'Could not save on this tablet. Tell a parent.';
   ui.pMsgAmber = !ok;
+  if (ok) syncNow(false).then(function () {
+    const i = syncInfo();
+    ui.pMsg = i.err ? 'Prices saved on this tablet. They will reach the Google Sheet at the next backup.' : 'Prices saved and sent to the Google Sheet.';
+    render();
+  });
 }
 function pricingScreen() {
-  const d = ui.pdraft, sel = ui.psel, valid = pricesValid(d);
-  const field = function (p, f, label) {
-    const on = sel.id === p.id && sel.f === f;
-    return '<button class="pfield' + (on ? ' on' : '') + '" data-a="pick" data-id="' + p.id + '" data-f="' + f + '"><small>' + label + '</small><b>$' + esc(d[p.id][f] || '?') + '</b></button>';
+  const d = ui.pdraft, problem = priceProblem(d);
+  const field = function (f, label) {
+    return '<button class="pfield big' + (ui.pfield === f ? ' on' : '') + '" data-a="pick" data-f="' + f + '"><small>' + label + '</small><b>' + (d[f] ? '$' + esc(d[f]) : '—') + '</b></button>';
   };
-  const rows = PRODUCTS.map(function (p) {
-    return '<div class="prow"><span class="pimg" style="background:' + p.bg + '">' + (p.img ? '<img src="' + p.img + '" alt="">' : '') + '</span>' +
-      '<span class="pname">' + esc(p.name) + '</span>' + field(p, 'one', '1 item') + field(p, 'multi', 'any 2 or more') + '</div>';
-  }).join('');
-  const sp = PRODUCTS.find(function (p) { return p.id === sel.id; });
-  const cur = d[sel.id][sel.f];
-  return '<div class="pscreen"><section class="plist">' +
-    '<div class="note" style="margin-bottom:6px">Tap a price, then type the new amount on the keypad. "Any 2 or more" is used when the order has 2 or more items of any kind, mixing products is fine.</div>' + rows + '</section>' +
-    '<section class="pcol">' +
-    '<div class="card"><span class="sub">Changing</span><span style="font-size:22px;font-weight:900">' + esc(sp.name) + ' · ' + (sel.f === 'one' ? '1 item' : 'any 2 or more items') + '</span></div>' +
-    '<section class="kpad"><h1>New price</h1><div class="disp">' + (cur ? '$' + esc(cur) : '—') + '</div>' +
+  const P = store.prices;
+  return '<div class="pscreen"><section class="plist" style="gap:16px;padding:22px">' +
+    '<h1>Prices</h1>' +
+    '<div class="note" style="font-size:16px">These two prices are used for every product. Tap a box, then type the new price on the keypad.</div>' +
+    field('one', 'Price for 1 item') +
+    field('multi', 'Price each, when buying 2 or more') +
+    '<div class="note" style="font-size:15px">Now in use: 1 item $' + P.one + ' · 2 or more $' + P.multi + ' each.' + (P.updatedAt > 1e12 ? ' Last changed ' + clock(new Date(P.updatedAt)) + ', ' + new Date(P.updatedAt).toLocaleDateString() + '.' : '') + '</div>' +
+    '</section><section class="pcol">' +
+    '<section class="kpad"><h1>' + (ui.pfield === 'one' ? 'Price for 1 item' : 'Price each, 2 or more') + '</h1>' +
     '<div class="keys">' + KEYS.map(function (k) { return '<button data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div></section>' +
+    (problem ? '<div class="warn">' + esc(problem) + '</div>' : '') +
     (ui.pMsg ? '<div class="flash' + (ui.pMsgAmber ? ' amber' : '') + '">' + esc(ui.pMsg) + '</div>' : '') +
-    (valid ? '' : '<div class="warn">Every price needs a number from 1 to 999.</div>') +
-    '<button class="savebtn g" data-a="savePrices"' + (valid ? '' : ' disabled') + '>' + ICON.check + 'Save prices</button>' +
+    '<button class="savebtn g" data-a="savePrices"' + (problem ? ' disabled' : '') + '>' + ICON.check + 'Save prices</button>' +
     '<button class="btn" style="height:52px" data-a="cancelPrices">Cancel – don\'t save</button></section></div>';
 }
 
@@ -520,21 +536,6 @@ function modalHtml() {
     const s = store.sales.find(function (x) { return x.id === m.id; });
     body = '<h2>Void this sale?</h2><div style="font-size:18px">' + esc(s.time) + ' · ' + esc(s.items) + ' · $' + s.total + ' ' + s.pay + '</div>' +
       '<div class="acts"><button class="btn" data-a="closeModal">Cancel</button><button class="btn red" data-a="voidYes" data-id="' + s.id + '">Void sale</button></div>';
-  } else if (m.type === 'adjust') {
-    const t = totals();
-    if (m.stage === 'pin') {
-      body = '<h2>Parent PIN</h2><div class="note">A parent needs to enter the PIN to change this total.</div>' +
-        '<div class="dots' + (ui.pinWrong ? ' bad' : '') + '">' + (ui.pin ? '●●●●'.slice(0, ui.pin.length) : '····') + '</div>' +
-        (ui.pinWrong ? '<div class="err">Wrong PIN, try again</div>' : '') +
-        '<div class="keys" style="flex:none">' + KEYS.map(function (k) { return '<button style="height:58px" data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
-        '<div class="acts"><button class="btn" data-a="closeModal">Cancel</button></div>';
-    } else {
-      body = '<h2>Change total for this order</h2><div class="note">Calculated total: $' + t.calc + '. The new total applies to this order only.</div>' +
-        '<div class="disp" style="height:70px;font-size:44px">' + (ui.adjEntered ? '$' + esc(ui.adjEntered) : '—') + '</div>' +
-        '<div class="keys" style="flex:none">' + KEYS.map(function (k) { return '<button style="height:52px" data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
-        '<button class="savebtn g" style="height:60px;font-size:21px" data-a="adjSave"' + (ui.adjEntered ? '' : ' disabled') + '>' + ICON.check + 'Save new total</button>' +
-        '<div class="acts"><button class="btn" data-a="adjReset">Use calculated $' + t.calc + '</button><button class="btn" data-a="closeModal">Cancel</button></div>';
-    }
   } else if (m.type === 'settings') {
     const auto = today() === CONFIG.EVENT_DATE ? 'EVENT' : 'TEST';
     body = '<h2>Settings</h2><div class="note">Mode decides which Google sheet tab gets the sales. Automatic = EVENT on Dec 10, TEST on other days. Now: <b>' + (mode() === 'test' ? 'TEST' : 'EVENT') + '</b> (automatic would be ' + auto + ').</div>' +
@@ -570,10 +571,7 @@ document.getElementById('app').addEventListener('click', function (e) {
     case 'add': addItem(id, 1); break;
     case 'plus': addItem(id, 1); break;
     case 'minus': addItem(id, -1); break;
-    case 'clear': ui.cart = {}; ui.flash = ''; ui.override = null; break;
-    case 'adjustAsk': if (totals().count) { ui.modal = { type: 'adjust', stage: 'pin' }; ui.pin = ''; ui.pinWrong = false; ui.adjEntered = ''; } break;
-    case 'adjSave': { const n = parseInt(ui.adjEntered, 10); if (ui.adjEntered && n >= 0) ui.override = { total: n }; ui.modal = null; break; }
-    case 'adjReset': ui.override = null; ui.modal = null; break;
+    case 'clear': ui.cart = {}; ui.flash = ''; break;
     case 'goCash': ui.screen = 'cash'; ui.entered = ''; ui.flash = ''; break;
     case 'goVenmo': ui.screen = 'venmo'; ui.flash = ''; break;
     case 'goZelle': ui.screen = 'zelle'; ui.flash = ''; break;
@@ -584,7 +582,7 @@ document.getElementById('app').addEventListener('click', function (e) {
     case 'goSell': ui.screen = 'sell'; ui.pin = ''; ui.pinWrong = false; break;
     case 'goLog': gotoProtected('log'); break;
     case 'goPricing': gotoProtected('pricing'); break;
-    case 'pick': ui.psel = { id: id, f: b.dataset.f }; ui.pMsg = ''; break;
+    case 'pick': ui.pfield = b.dataset.f; ui.pMsg = ''; break;
     case 'savePrices': savePrices(); break;
     case 'cancelPrices': ui.pdraft = null; ui.screen = 'sell'; break;
     case 'lock': ui.unlocked = false; ui.screen = 'sell'; break;
@@ -615,27 +613,11 @@ function key(k) {
     }
     ui.pin = p; ui.pinWrong = false; return;
   }
-  if (ui.modal && ui.modal.type === 'adjust') {
-    // Change-total popup: first the parent PIN, then the new amount.
-    if (ui.modal.stage === 'pin') {
-      let p = ui.pin;
-      if (k === 'Clear') p = ''; else if (k === 'Del') p = p.slice(0, -1); else if (p.length < 4) p += k;
-      if (p.length === 4) {
-        if (p === CONFIG.PIN) { ui.modal.stage = 'amount'; ui.pin = ''; ui.pinWrong = false; }
-        else { ui.pin = ''; ui.pinWrong = true; }
-        return;
-      }
-      ui.pin = p; ui.pinWrong = false; return;
-    }
-    let v = ui.adjEntered;
-    if (k === 'Clear') v = ''; else if (k === 'Del') v = v.slice(0, -1); else if (v.length < 3) v = (v === '0' ? '' : v) + k;
-    ui.adjEntered = v; return;
-  }
   if (ui.screen === 'pricing') {
-    // Keypad types into the selected price field (max 3 digits).
-    const cell = ui.pdraft[ui.psel.id]; let v = cell[ui.psel.f];
+    // Keypad types into the selected price box (max 3 digits).
+    let v = ui.pdraft[ui.pfield];
     if (k === 'Clear') v = ''; else if (k === 'Del') v = v.slice(0, -1); else if (v.length < 3) v = (v === '0' ? '' : v) + k;
-    cell[ui.psel.f] = v; ui.pMsg = ''; return;
+    ui.pdraft[ui.pfield] = v; ui.pMsg = ''; return;
   }
   let v = ui.entered;
   if (k === 'Clear') v = ''; else if (k === 'Del') v = v.slice(0, -1); else if (v.length < 3) v = (v === '0' ? '' : v) + k;
@@ -646,6 +628,7 @@ window.addEventListener('offline', function () { render(); });
 setInterval(render, 60000); // keep badges fresh
 
 render();
+if (autoSyncAllowed()) syncNow(false); // also fetches the latest prices from the sheet
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {});
   // A new version was published: reload once, but never in the middle of a sale.
