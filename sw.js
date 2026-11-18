@@ -1,6 +1,6 @@
 // Offline cache for the Maker Market POS. Bump VERSION when files change.
-const VERSION = 'mmpos-v14';
-const FILES = ['./', 'index.html', 'manifest.json', 'img/tiger.png', 'img/egg.png', 'img/candy.png', 'img/flamingo.png', 'img/venmo-qr.png', 'img/zelle-qr.png', 'img/boba.png',
+const VERSION = 'mmpos-v15';
+const FILES = ['./', 'index.html', 'manifest.json', 'img/tiger.png', 'img/egg.png', 'img/candy.png', 'img/flamingo.png', 'img/venmo-qr.png', 'img/zelle-qr.png', 'img/boba.png', 'img/tart.png',
   'img/icon-192.png', 'img/icon-512.png', 'fonts/nunito-latin-700-normal.woff2', 'fonts/nunito-latin-800-normal.woff2', 'fonts/nunito-latin-900-normal.woff2'];
 
 self.addEventListener('install', e => {
